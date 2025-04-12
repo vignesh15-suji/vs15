@@ -1,0 +1,80 @@
+
+
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const mongoose = require('mongoose');
+
+dotenv.config();
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('MongoDB Connected'))
+  .catch((err) => console.error(err));
+
+// Import Routes
+const userRoutes = require('./routes/userRoutes');
+app.use('/api/users', userRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
+plaintext
+    
+MONGO_URI=mongodb://localhost:27017/healthapp
+JWT_SECRET=your_secret_key
+
+
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, unique: true, required: true },
+  password: { type: String, required: true },
+  goals: {
+    steps: Number,
+    workouts: Number,
+    calorieIntake: Number,
+  },
+  history: [
+    {
+      date: Date,
+      steps: Number,
+      calories: Number,
+      workouts: Number,
+    }
+  ]
+});
+
+module.exports = mongoose.model('User', userSchema);
+
+
+const express = require('express');
+const router = express.Router();
+const User = require('../models/User');
+
+// Register new user
+router.post('/register', async (req, res) => {
+  try {
+    const newUser = new User(req.body);
+    await newUser.save();
+    res.status(201).json({ message: 'User registered' });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// Fetch user data
+router.get('/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    res.json(user);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+module.exports = router;
